@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class AllAskResponse {
 
-    private long id;
+    private long meetId;
+    private long itemId;
     private LocalDateTime dateAsked ;
     private String fullName ;
     private String email ;

@@ -55,10 +55,15 @@ public class UserTravelerController {
     {
 
         userTravelerService.confirmShipping_Traveler(confirmTravelerShippingRequest,authentication)  ;
-        return ResponseEntity.ok("GOOD") ;
+        return ResponseEntity.status(HttpStatus.OK).build() ;
     }
 
 
-
+    @DeleteMapping("/desactive")
+    public ResponseEntity<?> desactiveAccount(Authentication authentication)
+    {
+        userTravelerService.desactiveAccount(authentication) ;
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
 }

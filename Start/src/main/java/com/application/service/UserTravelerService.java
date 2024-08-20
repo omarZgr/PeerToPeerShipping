@@ -208,6 +208,16 @@ public class UserTravelerService {
 
     }
 
+    public void desactiveAccount(Authentication authentication) {
+
+        UserEntity userEntity = ((UserEntity) authentication.getPrincipal());
+
+        userEntity.setAccountLocked(true);
+        userRepository.save(userEntity)  ;
+        log.warn("User desactived");
+
+    }
+
     private void sendEmail_ASk(UserEntity userEntity, long itemId)
     {
         UserEntity userEntitySender = userRepository.findByItemsId(itemId) ;

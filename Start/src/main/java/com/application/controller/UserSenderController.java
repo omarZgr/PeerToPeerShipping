@@ -75,7 +75,7 @@ public class UserSenderController {
     public ResponseEntity<?> meetingDone_Sender(@RequestParam long meetId, Authentication connectedUser)
     {
         userSenderService.meetingDone_Sender(meetId,connectedUser) ;
-        return ResponseEntity.ok("OK") ;
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/confirmation")
@@ -84,7 +84,7 @@ public class UserSenderController {
     {
 
         userSenderService.confirmShipping_Sender(confirmationRequest,authentication)  ;
-        return ResponseEntity.ok("GOOD") ;
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/confirmation/commentaire")

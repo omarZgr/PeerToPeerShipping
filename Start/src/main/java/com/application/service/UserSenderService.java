@@ -151,6 +151,7 @@ public class UserSenderService {
             log.warn("AM HERE");
             meetResponseList.add(new AllAskResponse(
                     current.getId(),
+                    current.getItem().getId(),
                     current.getDateAsked(),
                     current.getUserTraveler().getFullName(),
                     current.getUserTraveler().getEmail(),
@@ -191,6 +192,7 @@ public class UserSenderService {
             log.warn("AM HERE");
             meetResponseList.add(new AllAskResponse(
                     current.getId(),
+                    current.getItem().getId(),
                     current.getDateAsked(),
                     current.getUserTraveler().getFullName(),
                     current.getUserTraveler().getEmail(),
@@ -281,18 +283,21 @@ public class UserSenderService {
         String imagePath ;
 
         Optional<ConfirmationEntity> confirmationOptional = confirmationRepository.findByItemId(confirmSenderShippingRequest.getItemId()) ;
-        if (confirmSenderShippingRequest.getImage()!=null)
-        {
-           String  path = userEntity.getFullName() +  "\\sender\\confirmShipping\\" + confirmationOptional.get().getItem().getNom() ;
-            imagePath = saveImage_Final(confirmSenderShippingRequest.getImage(),path)  ;
 
-        }
-        else
-             imagePath = "" ;
+
 
 
         if (!confirmationOptional.isPresent())
         {
+            if (confirmSenderShippingRequest.getImage()!=null)
+            {
+                String  path = userEntity.getFullName() +  "\\sender\\confirmShipping\\" + itemRepository.findById(confirmSenderShippingRequest.getItemId()).get().getNom();
+                imagePath = saveImage_Final(confirmSenderShippingRequest.getImage(),path)  ;
+
+            }
+            else
+                imagePath = "" ;
+
             ConfirmationEntity confirmationEntity = ConfirmationEntity.builder()
                     .dateConfirmationSender(LocalDateTime.now())
                     .descriptionSender(!confirmSenderShippingRequest.getDescription().isEmpty() ? confirmSenderShippingRequest.getDescription() : "vide")
@@ -306,6 +311,16 @@ public class UserSenderService {
         }
         else
         {
+
+            if (confirmSenderShippingRequest.getImage()!=null)
+            {
+                String  path = userEntity.getFullName() +  "\\sender\\confirmShipping\\" + confirmationOptional.get().getItem().getNom();
+                imagePath = saveImage_Final(confirmSenderShippingRequest.getImage(),path)  ;
+
+            }
+            else
+                imagePath = "" ;
+
             confirmationOptional.get().setConfirmSender(true);
             confirmationOptional.get().setDateConfirmationSender(LocalDateTime.now());
             confirmationOptional.get().setDescriptionSender(confirmSenderShippingRequest.getDescription());
@@ -338,7 +353,7 @@ public class UserSenderService {
         {
             CommentaireEntity commentaireEntity = CommentaireEntity.builder()
                     .commentaire(commentaireRequest.getCommentaire())
-                    .rate(commentaireRequest.getRate())
+                    .rate(Integer.valueOf(commentaireRequest.getRate()))
                     .userTraveler(userTraveler.get().getUserTraveler())
                     .build() ;
 
@@ -362,7 +377,7 @@ public class UserSenderService {
         if (optionalCommentaire.isPresent())
         {
             optionalCommentaire.get().setCommentaire(commentaireUpdateRequest.getComment());
-            optionalCommentaire.get().setRate(commentaireUpdateRequest.getRate());
+            optionalCommentaire.get().setRate(Integer.valueOf(commentaireUpdateRequest.getRate()));
 
             log.warn("Comment update");
             commentaireRepository.save(optionalCommentaire.get()) ;
@@ -374,6 +389,8 @@ public class UserSenderService {
 
     public void reclamation(ReclamtionRequest reclamtionRequest, Authentication authentication) {
         UserEntity userEntity = ((UserEntity) authentication.getPrincipal());
+
+        // todo  check user traveler by confirmationRepositoy.findByUserTraveler()
 
         ReclamationEntity reclamationEntity = ReclamationEntity.builder()
                 .userTraveler(userRepository.findById(reclamtionRequest.getUserTravelerId()).get())

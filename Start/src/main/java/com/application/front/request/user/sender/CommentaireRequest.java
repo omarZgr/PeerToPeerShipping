@@ -17,6 +17,7 @@ public class CommentaireRequest {
     @NotBlank(message = "Commentaire is mandatory")
     private String commentaire ;
 
-    @Size(min = 0,max = 10,message = "rate should be between 0 and 8")
-    private int rate ;
+    @NotEmpty(message = "rate is mandatory")
+    @NotBlank(message = "rate is mandatory")
+    private String rate ;
 }
