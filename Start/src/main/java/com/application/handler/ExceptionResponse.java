@@ -4,6 +4,7 @@ package com.application.handler;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +20,6 @@ public class ExceptionResponse {
     private String businessErrorDescription;
     private String error;
     private Set<String> validationErrors;
-    private Map<String, String> errors;
+    private Map<String, List<String>> errors;  // Modified to hold multiple errors per field
 
 }

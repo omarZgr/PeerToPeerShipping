@@ -15,34 +15,28 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 public class RegisterRequest {
 
-    @NotEmpty(message = "Nom is mandatory")
     @NotBlank(message = "Nom is mandatory")
     private String nom ;
 
-    @NotEmpty(message = "Prenom is mandatory")
     @NotBlank(message = "Prenom is mandatory")
     private String prenom ;
 
 
-    @NotEmpty(message = "Email is mandatory")
     @NotBlank(message = "Email is mandatory")
     @Email(message = "Email is not formatted")
     private String email ;
 
 
-    @NotEmpty(message = "Password is mandatory")
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, message = "Password should be 8 characters long minimum")
     private String password ;
 
-    @NotEmpty(message = "Tel is mandatory")
     @NotBlank(message = "Tel is mandatory")
     private String tel ;
 
 
     private MultipartFile image ;
 
-    @NotEmpty(message = "CIN is mandatory")
     @NotBlank(message = "CIN is mandatory")
     private String cin ;
 

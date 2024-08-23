@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -81,7 +82,7 @@ public class AuthenticationService {
 
 
     @Transactional
-    public void register(RegisterRequest registerRequest) {
+    public void register(RegisterRequest registerRequest) throws IOException {
 
         Optional<UserEntity> userOptional = userRepository.findByEmail(registerRequest.getEmail()) ;
 
@@ -95,6 +96,9 @@ public class AuthenticationService {
         if(userOptional.isPresent())
             throw new InvalidEmailException("This email is already used") ;
 
+
+        String base64Image = encodeToBase64(registerRequest.getImage() );
+
         var user = UserEntity.builder()
                 .nom(registerRequest.getNom())
                 .prenom(registerRequest.getPrenom())
@@ -102,6 +106,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .tel(registerRequest.getTel())
                 .cin(registerRequest.getCin())
+                .image(base64Image)
 
                 .roleEntities(List.of(role.get()))
 
@@ -116,7 +121,7 @@ public class AuthenticationService {
         {
             String fullNmae = registerRequest.getNom() + " " + registerRequest.getPrenom() ;
             String imagePath = saveImage(image,fullNmae)  ;
-            user.setImage(imagePath);
+          //  user.setImage(imagePath);
 
         }
 
@@ -214,12 +219,12 @@ public class AuthenticationService {
            }
            else
            {
-               log.warn("This token not valid  ,we sent other token");
+               log.warn("This token is expired ,we sent other token");
                sendEmail(email,token.get().getUser());
 
                token.get().setValid(false);
                tokenRepository.save(token.get()) ;
-               throw new TokenExpiration("This token not valid  ,we sent other token") ;
+               throw new TokenExpiration("This token is expired ,we sent other token") ;
 
            }
 
@@ -234,4 +239,10 @@ public class AuthenticationService {
 
 
     }
+
+    private String encodeToBase64(MultipartFile file) throws IOException {
+        byte[] bytes = file.getBytes();
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
 }

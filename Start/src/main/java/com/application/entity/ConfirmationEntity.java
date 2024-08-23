@@ -27,6 +27,9 @@ public class ConfirmationEntity extends BaseEntity {
 
     private LocalDateTime dateConfirmationSender ;
     private LocalDateTime dateConfirmationTraveler ;
+
+    @Column(columnDefinition = "TEXT") // Specifies the column type as TEXT
+
     private String photo ;
     private String descriptionSender ;
     private String descriptionTraveler ;

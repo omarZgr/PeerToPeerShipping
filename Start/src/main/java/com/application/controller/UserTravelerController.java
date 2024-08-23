@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("user/traveler")
@@ -42,8 +44,7 @@ public class UserTravelerController {
     }
 
     @PostMapping("/meeting/valid")
-    public ResponseEntity<?> meetingDone_Traveler(@ModelAttribute @Valid ValidMeetingRequest validMeetingRequest, Authentication connectedUser)
-    {
+    public ResponseEntity<?> meetingDone_Traveler(@ModelAttribute @Valid ValidMeetingRequest validMeetingRequest, Authentication connectedUser) throws IOException {
         userTravelerService.meetingDone_Traveler(validMeetingRequest,connectedUser); ;
         return ResponseEntity.ok("OK") ;
     }

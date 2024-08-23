@@ -43,6 +43,8 @@ public class UserEntity implements UserDetails, Principal {
     private boolean isValid ;
     private boolean isEnabled ;
     private boolean isAccountLocked ;
+
+    @Column(columnDefinition = "TEXT") // Specifies the column type as TEXT
     private String image ;
     private String cin ;
 

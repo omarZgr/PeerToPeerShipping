@@ -5,16 +5,17 @@ import com.application.handler.exception.InvalidEmailException;
 import com.application.handler.exception.TokenExpiration;
 import com.application.handler.exception.TokenInValidationException;
 import jakarta.mail.MessagingException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -108,21 +109,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exp) {
-        Set<String> errors = new HashSet<>();
-        exp.getBindingResult().getAllErrors()
-                .forEach(error -> {
-                    //var fieldName = ((FieldError) error).getField();
-                    var errorMessage = error.getDefaultMessage();
-                    errors.add(errorMessage);
-                });
+        Map<String, List<String>> errors = new HashMap<>();
 
-        return ResponseEntity
-                .status(BAD_REQUEST)
-                .body(
-                        ExceptionResponse.builder()
-                                .validationErrors(errors)
-                                .build()
-                );
+        exp.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+
+            // Add error message to the list of errors for this field
+            errors.computeIfAbsent(fieldName, k -> new ArrayList<>()).add(errorMessage);
+        });
+
+        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
+                .errors(errors)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exceptionResponse);
     }
 
     @ExceptionHandler(Exception.class)

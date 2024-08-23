@@ -27,6 +27,8 @@ public class ItemEntity extends BaseEntity {
     private String nom ;
     private String description ;
     private String type ;
+
+    @Column(columnDefinition = "TEXT") // Specifies the column type as TEXT
     private String photo ;
     private String villeDepart ;
     private String villeDestination ;

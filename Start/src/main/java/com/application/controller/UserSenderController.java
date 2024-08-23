@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.text.ParseException;
 
 @RestController
@@ -26,10 +27,9 @@ public class UserSenderController {
 
 
     @PostMapping(value = "/offre",consumes = "multipart/form-data")
-    public ResponseEntity sender(
+    public ResponseEntity<?> sender(
             @ModelAttribute @Valid ItemSenderRequest itemSenderRequest,
-            Authentication connectedUser)
-    {
+            Authentication connectedUser) throws IOException {
         userSenderService.sender(itemSenderRequest,connectedUser) ;
         return ResponseEntity.status(HttpStatus.CREATED).body("") ;
     }
@@ -80,8 +80,7 @@ public class UserSenderController {
 
     @PostMapping("/confirmation")
     public ResponseEntity<?> confirmShipping_Sender(@ModelAttribute @Valid  ConfirmSenderShippingRequest confirmationRequest,
-                                                    Authentication authentication)
-    {
+                                                    Authentication authentication) throws IOException {
 
         userSenderService.confirmShipping_Sender(confirmationRequest,authentication)  ;
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -109,8 +108,7 @@ public class UserSenderController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@ModelAttribute @Valid  UpdateProfileRequest updateProfileRequest, Authentication authentication)
-    {
+    public ResponseEntity<?> updateProfile(@ModelAttribute @Valid  UpdateProfileRequest updateProfileRequest, Authentication authentication) throws IOException {
         userSenderService.updateProfile(updateProfileRequest,authentication) ;
 
         return ResponseEntity.status(HttpStatus.OK).build();

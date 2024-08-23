@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,47 +92,48 @@ public class UserTravelerService {
 
     }
 
+
+
     public void askMeeting(long itemId, Authentication connectedUser)
     {
         Optional<ItemEntity> itemOptional = itemRepository.findById(itemId) ;
         UserEntity userEntity = ((UserEntity) connectedUser.getPrincipal());
 
-
         if (!itemOptional.isPresent())
-        {
-            log.warn("This itemId not exist");
             throw new RuntimeException("This itemId not exist") ;
-        }
 
-        Optional<MeetEntity> optionalMeet = meetRepository.findByItemId(itemId) ;
 
-        if (!optionalMeet.isPresent())
+        boolean canAsking = !meetRepository.findByItemId(itemId).isPresent() || !meetRepository.findByItemIdAndConfirmMeeting(itemId,false).isEmpty();
+
+        if (canAsking)
         {
-            //// sift msg ;
+
+            boolean isAlreadyAsk = meetRepository.findByItemIdAndUserSenderIdAndUserTravelerId(itemId,itemOptional.get().getUser().getId(),userEntity.getId()).isPresent()  ;
+
+            if (isAlreadyAsk) {
+                throw new RuntimeException("You are already asking this item") ;
+            }
+            else
+
             sendEmail_ASk(userEntity,itemId) ;
 
         }
-        else {
-            boolean isConfirm = optionalMeet.get().isConfirmMeeting() ;
+        else
+            throw new RuntimeException("This item already confirm") ;
 
-            if (!isConfirm)
-            {
-                // siftt
-                sendEmail_ASk(userEntity,itemId) ;
-            }
-            else {
-                log.warn("You can't meeting for this item , already confirm");
-                throw new RuntimeException("You can't meeting for this item , already confirm") ;
 
-            }
-        }
+
+
+
     }
 
-    public void meetingDone_Traveler(ValidMeetingRequest validMeetingRequest, Authentication connectedUser) {
+
+    public void meetingDone_Traveler(ValidMeetingRequest validMeetingRequest, Authentication connectedUser) throws IOException {
 
         UserEntity userEntity = ((UserEntity) connectedUser.getPrincipal());
 
         MeetEntity meetEntity = meetRepository.findById(validMeetingRequest.getMeetId()).get() ;
+        String   base64Image = encodeToBase64(validMeetingRequest.getImage());
 
         meetEntity.setValidTraveler(true);
 
@@ -147,7 +149,7 @@ public class UserTravelerService {
             }
             else
                 imagePath = "" ;
-            meetEntity.setPhoto(imagePath);
+            meetEntity.setPhoto(base64Image);
         }
 
         meetRepository.save(meetEntity) ;
@@ -269,5 +271,8 @@ public class UserTravelerService {
         }
     }
 
-
+    private String encodeToBase64(MultipartFile file) throws IOException {
+        byte[] bytes = file.getBytes();
+        return Base64.getEncoder().encodeToString(bytes);
+    }
 }

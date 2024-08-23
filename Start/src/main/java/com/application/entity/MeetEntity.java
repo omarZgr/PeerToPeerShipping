@@ -28,6 +28,9 @@ public class MeetEntity extends BaseEntity {
     private boolean validSender ;
     private boolean validTraveler ;
     private String location ;
+
+    @Column(columnDefinition = "TEXT") // Specifies the column type as TEXT
+
     private String photo ;
     private boolean confirmMeeting ;
 

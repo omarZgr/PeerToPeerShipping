@@ -5,10 +5,13 @@ import com.application.front.request.user.sender.*;
 import com.application.common.PageResponse;
 
 import com.application.entity.*;
+import java.util.Base64;
+
 import com.application.enums.EmailStatus;
 import com.application.front.response.sender.AllAskResponse;
 import com.application.front.response.sender.AllItemsResponse;
 import com.application.enums.StatusItem;
+import com.application.front.response.sender.CommentaireResponse;
 import com.application.handler.exception.InvalidEmailException;
 import com.application.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -57,9 +60,20 @@ public class UserSenderService {
 
 
 
-    public void sender(ItemSenderRequest itemSenderRequest, Authentication connectedUser) {
+    public void sender(ItemSenderRequest itemSenderRequest, Authentication connectedUser) throws IOException {
 
         UserEntity userEntity = ((UserEntity) connectedUser.getPrincipal());
+
+        MultipartFile image = itemSenderRequest.getPhoto() ;
+
+            String fullNmae = userEntity.getFullName() ;
+            String path = fullNmae +  "\\sender\\items\\" + itemSenderRequest.getNom() ;
+            String imagePath = saveImage_Final(image,path)  ;
+
+        String base64Image = encodeToBase64(image);
+
+
+
 
         ItemEntity itemEntity = ItemEntity.builder()
                 .nom(itemSenderRequest.getNom())
@@ -70,19 +84,11 @@ public class UserSenderService {
                 .montant(itemSenderRequest.getMontant())
                 .statusItem(StatusItem.WAITING)
                 .isEnable(true)
+                .photo(base64Image)
                 .user(userEntity)
 
                 .build() ;
 
-        MultipartFile image = itemSenderRequest.getPhoto() ;
-        if (image!=null)
-        {
-            String fullNmae = userEntity.getFullName() ;
-            String path = fullNmae +  "\\sender\\items\\" + itemSenderRequest.getNom() ;
-            String imagePath = saveImage_Final(image,path)  ;
-            userEntity.setImage(imagePath);
-
-        }
 
         itemRepository.save(itemEntity)  ;
 
@@ -95,6 +101,8 @@ public class UserSenderService {
 
 
     }
+
+
     public PageResponse<AllItemsResponse> getAllItmes(int page, int size, Authentication connectedUser) {
 
         UserEntity userEntity = ((UserEntity) connectedUser.getPrincipal());
@@ -146,21 +154,47 @@ public class UserSenderService {
         List<AllAskResponse> meetResponseList = new ArrayList<>() ;
 
 
+
         for (MeetEntity current:meetResponsePage)
         {
             log.warn("AM HERE");
+            List<CommentaireResponse> commentaireResponsesList  = new ArrayList<>();
+
+            List<CommentaireEntity> commentaireEntityList = commentaireRepository.findAllByUserTravelerId(current.getUserTraveler().getId())  ;
+
+                    for(CommentaireEntity currentComment:commentaireEntityList)
+                    {
+                        commentaireResponsesList.add(
+                                new CommentaireResponse(
+                                        currentComment.getId(),
+                                        currentComment.getCreatedDate(),
+                                        currentComment.getLastModifiedDate(),
+                                        null,
+                                        currentComment.getCommentaire()
+                                )
+                        ) ;
+
+                    }
             meetResponseList.add(new AllAskResponse(
                     current.getId(),
                     current.getItem().getId(),
+                    current.getItem().getPhoto(),
                     current.getDateAsked(),
                     current.getUserTraveler().getFullName(),
                     current.getUserTraveler().getEmail(),
                     current.getUserTraveler().getTel(),
+                    current.getUserTraveler().getId(),
                     current.getUserTraveler().getImage(),
-                    current.getItem().getPhoto()))   ;
+                    5,
+                    commentaireResponsesList)
+
+            )
+
+
+
+            ;
 
         }
-
 
         return new PageResponse<>(
                 meetResponseList,
@@ -185,6 +219,8 @@ public class UserSenderService {
         Page<MeetEntity>  meetResponsePage  = meetRepository.findAllByUserSenderEqualsAndConfirmMeeting(pageable, userEntity,false) ;
 
         List<AllAskResponse> meetResponseList = new ArrayList<>() ;
+    //    List<CommentaireEntity> commentaireEntities = commentaireRepository.findByUserTravelerId(meetRepository.findByUserTraveler) ;
+        List<CommentaireResponse> commentaireResponsesList = new ArrayList<>()  ;
 
 
         for (MeetEntity current:meetResponsePage)
@@ -193,12 +229,19 @@ public class UserSenderService {
             meetResponseList.add(new AllAskResponse(
                     current.getId(),
                     current.getItem().getId(),
+                    current.getItem().getPhoto(),
                     current.getDateAsked(),
                     current.getUserTraveler().getFullName(),
                     current.getUserTraveler().getEmail(),
                     current.getUserTraveler().getTel(),
+                    current.getUserTraveler().getId(),
                     current.getUserTraveler().getImage(),
-                    current.getItem().getPhoto()))   ;
+                    5,
+                    null)
+
+                    )
+
+               ;
 
         }
 
@@ -276,7 +319,7 @@ public class UserSenderService {
 
     }
 
-    public void confirmShipping_Sender(ConfirmSenderShippingRequest confirmSenderShippingRequest, Authentication authentication) {
+    public void confirmShipping_Sender(ConfirmSenderShippingRequest confirmSenderShippingRequest, Authentication authentication) throws IOException {
 
         UserEntity userEntity = ((UserEntity) authentication.getPrincipal());
 
@@ -285,6 +328,7 @@ public class UserSenderService {
         Optional<ConfirmationEntity> confirmationOptional = confirmationRepository.findByItemId(confirmSenderShippingRequest.getItemId()) ;
 
 
+        String   base64Image = encodeToBase64(confirmSenderShippingRequest.getImage());
 
 
         if (!confirmationOptional.isPresent())
@@ -298,12 +342,13 @@ public class UserSenderService {
             else
                 imagePath = "" ;
 
+
             ConfirmationEntity confirmationEntity = ConfirmationEntity.builder()
                     .dateConfirmationSender(LocalDateTime.now())
                     .descriptionSender(!confirmSenderShippingRequest.getDescription().isEmpty() ? confirmSenderShippingRequest.getDescription() : "vide")
                     .confirmSender(true)
                     .item(itemRepository.findById(confirmSenderShippingRequest.getItemId()).get())
-                    .photo(imagePath)
+                    .photo(base64Image)
                     .userSender(userEntity)
                     .build() ;
 
@@ -324,7 +369,7 @@ public class UserSenderService {
             confirmationOptional.get().setConfirmSender(true);
             confirmationOptional.get().setDateConfirmationSender(LocalDateTime.now());
             confirmationOptional.get().setDescriptionSender(confirmSenderShippingRequest.getDescription());
-            confirmationOptional.get().setPhoto(imagePath);
+            confirmationOptional.get().setPhoto(base64Image);
             confirmationOptional.get().setItem(itemRepository.findById(confirmSenderShippingRequest.getItemId()).get());
 
             confirmationOptional.get().setUserSender(userEntity);
@@ -403,12 +448,13 @@ public class UserSenderService {
         log.warn("We get you reclamtion ");
     }
 
-    public void updateProfile(UpdateProfileRequest updateProfileRequest, Authentication authentication) {
+    public void updateProfile(UpdateProfileRequest updateProfileRequest, Authentication authentication) throws IOException {
         UserEntity userEntity = ((UserEntity) authentication.getPrincipal());
 
         Optional<UserEntity> userOptional = userRepository.findByEmail(updateProfileRequest.getEmail()) ;
 
         boolean isEmailValid = userOptional.get().getId() == userEntity.getId();
+        String   base64Image = encodeToBase64(updateProfileRequest.getPhoto());
 
         if (isEmailValid)
         {
@@ -422,7 +468,7 @@ public class UserSenderService {
             }
             else
                 imagePath = "" ;
-            userOptional.get().setImage(imagePath);
+            userOptional.get().setImage(base64Image);
             userOptional.get().setPassword(passwordEncoder.encode(updateProfileRequest.getPassword()));
             userOptional.get().setTel(updateProfileRequest.getTel());
             userOptional.get().setEmail(updateProfileRequest.getEmail());
@@ -456,7 +502,10 @@ public class UserSenderService {
 
 
 
-
+    private String encodeToBase64(MultipartFile file) throws IOException {
+        byte[] bytes = file.getBytes();
+        return Base64.getEncoder().encodeToString(bytes);
+    }
 
     private void sendEmail_ConfirmASk(String email, String username, UserEntity userEntitySender, String dateMeeting)
     {
